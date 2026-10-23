@@ -807,6 +807,13 @@ controller.renderOverlays(ctx, { clearScreen: clear_screen });
 Pass no `clearScreen` and it declines to draw rather than interleaving its list
 with the grid underneath, which is what an embedded consumer wants.
 
+**Every body stays inside `rect`, not only the knob grid.** The knob list, the
+section picker and the items, preset and menu pages ended at `footer ? RULE_Y :
+64` and never read `rect`, so a host passing `rect` plus `bands.footer: false`
+(movy, whose loop strip owns rows 60-63) had a preset browser drawn down to row
+63 over its own bottom band. `bodyBottom()` clamps all five to the rect; with no
+rect it answers what it always did. `tests/host/test_door_body_honours_rect.sh`.
+
 **A module binding the controller from its own `ui_chain.js` owes that second
 call**, and until 2026-09 nothing said so: the draw lived in
 `shadow_ui_param_pages.mjs`, so for every other consumer the controller tracked

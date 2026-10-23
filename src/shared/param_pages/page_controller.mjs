@@ -5607,7 +5607,7 @@ export function createController(io = {}) {
     function drawKnobsAsList(ctx, title, footer, chrome, footerBand) {
         const mp = page();
         chrome(pageLabel(mp));
-        const bottom = footer ? RULE_Y : 64;
+        const bottom = bodyBottom(footer);
         const entered = menuEntered();
         drawPageChromeList(ctx,
             { x: MENU_LIST_X, y: MENU_LIST_Y, w: MENU_LIST_W, h: bottom - MENU_LIST_Y },
@@ -5620,6 +5620,24 @@ export function createController(io = {}) {
                          MENU_BRACKET_LEN);
         }
         footerBand();
+    }
+
+    /*
+     * Where a list-shaped body ends -- the knob list, the section picker and
+     * the items, preset and menu pages.
+     *
+     * Above the footer rule when there is a footer, and NEVER BELOW THE
+     * CALLER'S RECT. Only the knob grid used to read `rect`; these five sized
+     * themselves from the footer alone, so a tool that keeps its own bottom
+     * band (and says so with `rect` plus `bands.footer: false`) had a preset
+     * browser drawn straight over it, down to row 63. Without a rect nothing
+     * changes, which is every full-screen caller.
+     */
+    function bodyBottom(footer) {
+        const base = footer ? RULE_Y : 64;
+        const fr = s.frameRect;
+        if (!fr || !(fr.h > 0)) return base;
+        return Math.min(base, (Number.isFinite(fr.y) ? fr.y : 0) + fr.h);
     }
 
     function render(ctx, { title, rect, footer, bands } = {}) {
@@ -5744,7 +5762,7 @@ export function createController(io = {}) {
                  * bar, same list rect and same five rows as a menu page — the
                  * only difference is what the list holds.
                  */
-                const pbottom = footer ? RULE_Y : 64;
+                const pbottom = bodyBottom(footer);
                 pageChrome("SECTIONS");
                 drawPageChromeList(ctx,
                     { x: MENU_LIST_X, y: MENU_LIST_Y,
@@ -5759,7 +5777,7 @@ export function createController(io = {}) {
                  * five rows, same rect. Inert it highlights nothing — the page
                  * is something you can go INTO, not something you are in. */
                 pageChrome(mp.name);
-                const ibottom = footer ? RULE_Y : 64;
+                const ibottom = bodyBottom(footer);
                 const ist = itemsState(mp) || { list: [], cursor: 0, current: -1 };
                 const entered = menuEntered();
                 drawPageChromeList(ctx,
@@ -5789,7 +5807,7 @@ export function createController(io = {}) {
                  * That is the whole point: it used to eject into the list
                  * editor, which looks nothing like this. */
                 pageChrome(mp.name);
-                const pbottom = footer ? RULE_Y : 64;
+                const pbottom = bodyBottom(footer);
                 const prect = { x: MENU_FRAME_X, y: MENU_FRAME_Y,
                                 w: MENU_FRAME_W, h: pbottom - MENU_FRAME_Y - MENU_FRAME_BOTTOM_INSET };
                 const pst = presetState(mp) || {};
@@ -5827,7 +5845,7 @@ export function createController(io = {}) {
                  * module's pages rather than as somewhere else. header:false
                  * because that header is already drawn. */
                 pageChrome(mp.name);
-                const bottom = footer ? RULE_Y : 64;
+                const bottom = bodyBottom(footer);
                 const entered = menuEntered();
                 /*
                  * ONE list rect for both states. Shrinking it to make room for
